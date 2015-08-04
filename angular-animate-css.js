@@ -7,10 +7,12 @@ angular.module('ngAnimateCss', []).directive('animate', function () {
     var animationContent = '-webkit-animation: {{animation}} {{duration}};-moz-animation: {{animation}} {{duration}};-ms-animation: {{animation}} {{duration}};-o-animation: {{animation}} {{duration}};animation: {{animation}} {{duration}};';
     var stagingContent = '-webkit-transition-delay: {{staging}};-moz-transition-delay: {{staging}};-ms-transition-delay: {{staging}};-o-transition-delay: {{staging}};transition-delay: {{staging}};-webkit-transition-duration: 0s;-moz-transition-duration: 0s;-ms-transition-duration: 0s;-o-transition-duration: 0s;transition-duration: 0s;';
     var transitionContent = '-webkit-transition: {{duration}} linear all;-moz-transition: {{duration}} linear all;-ms-transition: {{duration}} linear all;-o-transition: {{duration}} linear all;transition: {{duration}} linear all;';
-    var defaultAnimationContent = '@-webkit-keyframes default-animation {0% {opacity: 0;-webkit-transform: scale3d(.3, .3, .3);transform: scale3d(.3, .3, .3);}50% {opacity: 1;}}@keyframes default-animation {0% {opacity: 0;-webkit-transform: scale3d(.3, .3, .3);transform: scale3d(.3, .3, .3);}50% {opacity: 1;}}.default-animation {-webkit-animation-name: default-animation;animation-name: default-animation;}';
+    var defaultInAnimationContent = '@-webkit-keyframes default-in-animation {0% {opacity: 0;-webkit-transform: scale3d(.3, .3, .3);transform: scale3d(.3, .3, .3);}50% {opacity: 1;}}@keyframes default-in-animation {0% {opacity: 0;-webkit-transform: scale3d(.3, .3, .3);transform: scale3d(.3, .3, .3);}50% {opacity: 1;}}.default-in-animation {-webkit-animation-name: default-in-animation;animation-name: default-in-animation;}';
+    var defaultOutAnimationContent = '@-webkit-keyframes default-out-animation{0%{opacity:1}50%{opacity:0;-webkit-transform:scale3d(.3,.3,.3);transform:scale3d(.3,.3,.3)}100%{opacity:0}}@keyframes default-out-animation{0%{opacity:1}50%{opacity:0;-webkit-transform:scale3d(.3,.3,.3);transform:scale3d(.3,.3,.3)}100%{opacity:0}}.default-out-animation{-webkit-animation-name:default-out-animation;animation-name:default-out-animation}';
     var opacityZero = 'opacity:0;';
     var opacityOne = 'opacity:1;';
-    var DEFAULT_ANIMATION = 'default-animation';
+    var DEFAULT_IN_ANIMATION = 'default-in-animation';
+    var DEFAULT_OUT_ANIMATION = 'default-out-animation';
 
     function link(scope, element, attrs) {
         // attributes that should be visible on the whole module
@@ -59,7 +61,7 @@ angular.module('ngAnimateCss', []).directive('animate', function () {
 
         // retrieve the correct angular attribute if present
         // this is used later on to anticipate the correct behaviour
-        function getAngularDirective(attrs) {
+        function getIsAngularDirective(attrs) {
             if (attrs.ngHide) {
                 return 'ng-hide';
             } else if (attrs.ngShow) {
@@ -150,7 +152,7 @@ angular.module('ngAnimateCss', []).directive('animate', function () {
                 } else if (attrs.animate) {
                     animation = attrs.animate;
                 } else {
-                    animation = DEFAULT_ANIMATION;
+                    animation = DEFAULT_IN_ANIMATION;
                 }
 
                 cssClass = cssClass.replace(/\{\{animation\}\}/g, animation);
@@ -193,11 +195,22 @@ angular.module('ngAnimateCss', []).directive('animate', function () {
             if (!attrs.duration) {
                 attrs.duration = 300;
             }
-            if (!attrs.animate) {
-                attrs.animate = DEFAULT_ANIMATION;
-                // create default animation (zoomIn from animate.css)
-                if (!selectorExists('.' + DEFAULT_ANIMATION)) {
-                    createClass(defaultAnimationContent);
+            if (attrs.animate === '') {
+                if(!attrs.animateIn){
+                    attrs.animateIn = DEFAULT_IN_ANIMATION;
+                    // create default animation (zoomIn from animate.css)
+                    if (!selectorExists('.' + DEFAULT_IN_ANIMATION)) {
+                        createClass(defaultInAnimationContent);
+                    }
+                }
+
+                if(!attrs.animateOut){
+                    attrs.animateOut = DEFAULT_OUT_ANIMATION;
+
+                    // create default animation (zoomOut from animate.css)
+                    if (!selectorExists('.' + DEFAULT_OUT_ANIMATION)) {
+                        createClass(defaultOutAnimationContent);
+                    }
                 }
             }
         }
@@ -206,7 +219,7 @@ angular.module('ngAnimateCss', []).directive('animate', function () {
         // main function which applies that adds the appropriate css class to the current element
         function setAnimation() {
             // check if element contains a expected angular attribute
-            if (angularDirectiveType = getAngularDirective(attrs)) {
+            if (angularDirectiveType = getIsAngularDirective(attrs)) {
                 setDefaults();
                 // gen a ccs class
                 mainCssClass = generateMainCssClassName();
